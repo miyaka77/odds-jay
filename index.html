@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>抽卡模拟器 · 大容量卡池</title>
+<title>odds-jay</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overscroll-behavior:none}
@@ -14,6 +14,7 @@
     color:#111;
     -webkit-font-smoothing:antialiased;
     -webkit-user-select:none;user-select:none;
+    touch-action:manipulation;
     display:flex;justify-content:center;align-items:center;
     overflow:hidden;
   }
@@ -26,29 +27,39 @@
     overflow:hidden;
     padding-top:env(safe-area-inset-top);
   }
-  @media (min-width:520px){
-    .app{ height:min(880px,94vh);border-radius:48px;box-shadow:0 30px 80px rgba(0,0,0,.14),0 0 0 1px rgba(0,0,0,.04); }
+  @media (min-width:600px){
+    .app{
+      width:min(620px,90vw);
+      max-width:620px;
+      height:min(920px,92vh);
+      border-radius:40px;
+      box-shadow:0 30px 80px rgba(0,0,0,.14),0 0 0 1px rgba(0,0,0,.04);
+    }
   }
-
-  /* 顶栏 */
-  .topbar{ display:flex;align-items:center;justify-content:space-between;padding:20px 18px 4px;flex:none;gap:6px; }
-  .topbar h1{ font-size:16px;font-weight:600;letter-spacing:-.2px;white-space:nowrap;flex:none; }
-  .top-right{ display:flex;align-items:center;gap:6px;min-width:0; }
+  .topbar{ display:flex;align-items:center;justify-content:space-between;padding:18px 16px 4px;flex:none;gap:6px; }
+  .topbar h1{ font-size:16px;font-weight:700;letter-spacing:-.3px;white-space:nowrap;flex:none; }
+  .top-right{ display:flex;align-items:center;gap:5px;min-width:0; }
   .badge{
-    font-size:9.5px;font-weight:500;color:#9a9aa0;background:#f7f7f9;
-    padding:6px 9px;border-radius:100px;letter-spacing:0;
+    font-size:9px;font-weight:500;color:#9a9aa0;background:#f7f7f9;
+    padding:5px 8px;border-radius:100px;letter-spacing:0;
     font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;
+    max-width:132px;overflow:hidden;text-overflow:ellipsis;
   }
   .badge b{color:#111;font-weight:600}
   .badge .ssrColor{color:#b39b5c}
   .badge .spColor{color:#111}
   .icon-btn{
     border:none;background:#f5f5f7;color:#111;font-family:inherit;font-size:11px;font-weight:600;
-    padding:6px 10px;border-radius:100px;letter-spacing:.2px;cursor:pointer;white-space:nowrap;flex:none;
+    padding:6px 9px;border-radius:100px;letter-spacing:.2px;cursor:pointer;white-space:nowrap;flex:none;
   }
   .icon-btn:active{ opacity:.65; }
-
-  /* 概率区 */
+  .icon-btn.more{ font-size:14px;padding:5px 10px;line-height:1; }
+  /* 修复：窄屏顶栏溢出 */
+  @media (max-width:360px){
+    .topbar h1{ font-size:14px; }
+    .badge{ font-size:8px;padding:4px 6px;max-width:88px; }
+    .icon-btn{ font-size:10px;padding:5px 7px; }
+  }
   .stat{ flex:none;padding:12px 22px 0;text-align:center; }
   .stat .label{ font-size:13px;color:#b0b0b6;letter-spacing:.6px;font-weight:500; }
   .stat .value{ font-size:58px;font-weight:700;line-height:1.04;letter-spacing:-2.5px;font-variant-numeric:tabular-nums;margin:2px 0 4px; }
@@ -59,8 +70,6 @@
   .bar{ height:6px;border-radius:100px;background:#f2f2f5;overflow:hidden;margin:16px 0 10px; }
   .bar-fill{ height:100%;width:2%;border-radius:100px;background:linear-gradient(90deg,#2b2b2b,#111);transition:width .4s cubic-bezier(.4,0,.2,1); }
   .hint{ font-size:11px;color:#c2c2c8;letter-spacing:.2px;font-variant-numeric:tabular-nums; }
-
-  /* 舞台 */
   .stage{ flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px 20px;overflow:hidden; }
   .placeholder{ font-size:13px;color:#d2d2d8;letter-spacing:.4px;animation:fadeIn .8s ease both; }
   @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -69,8 +78,6 @@
   .stage.show .placeholder{display:none}
   .grid.g10{grid-template-columns:repeat(5,1fr)}
   .grid.g1{grid-template-columns:1fr;max-width:150px;margin:0 auto}
-
-  /* 卡片 */
   .card{
     position:relative;aspect-ratio:3/4;border-radius:14px;background:#fff;border:1px solid #eeeef1;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px;
@@ -103,8 +110,6 @@
   }
   @keyframes spPulse{0%,100%{opacity:.45}50%{opacity:1}}
   .card.sp .rarity{color:#111;font-weight:900}.card.sp .cname{color:#111;font-weight:600}
-
-  /* 有图 */
   .card .cimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
   .card.has-img .rarity{
     position:absolute;top:4px;left:4px;z-index:3;background:rgba(255,255,255,.88);
@@ -118,16 +123,12 @@
   }
   .card.has-img .idx{color:rgba(255,255,255,.85);text-shadow:0 1px 3px rgba(0,0,0,.5);z-index:4}
   .card.gif-flag .cname::after{ content:' GIF';font-size:7px;opacity:.85; }
-
-  /* 单抽放大 */
   .grid.g1 .card{border-radius:20px;gap:6px}
   .grid.g1 .rarity{font-size:15px;letter-spacing:1.2px}
   .grid.g1 .cname{font-size:12px}
   .grid.g1 .idx{font-size:9px;right:9px;bottom:7px}
   .grid.g1 .card.has-img .rarity{font-size:11px;padding:2px 8px;top:8px;left:8px;border-radius:8px}
   .grid.g1 .card.has-img .cname{font-size:11px;padding:18px 6px 5px}
-
-  /* 按钮 */
   .actions{flex:none;display:flex;gap:12px;padding:8px 20px calc(16px + env(safe-area-inset-bottom))}
   .btn{
     flex:1;height:54px;border-radius:16px;border:none;font-family:inherit;font-size:16px;font-weight:600;
@@ -137,8 +138,6 @@
   .btn:disabled{opacity:.45;pointer-events:none}
   .btn-ghost{background:#fff;color:#111;box-shadow:inset 0 0 0 1px #e8e8ec}
   .btn-primary{background:#111;color:#fff;box-shadow:0 6px 18px -6px rgba(0,0,0,.45)}
-
-  /* 编辑器 */
   .editor{
     position:absolute;inset:0;z-index:50;background:#fff;display:flex;flex-direction:column;
     transform:translateY(100%);transition:transform .34s cubic-bezier(.4,0,.2,1);
@@ -205,8 +204,6 @@
   .ed-del:active{background:#ffe8e8;color:#e05a5a}
   .ed-empty{text-align:center;padding:64px 20px;color:#c8c8ce;font-size:14px;line-height:1.9;letter-spacing:.3px}
   .ed-empty span{font-size:12px;color:#d8d8de}
-
-  /* ============ 图鉴 ============ */
   .gallery{
     position:absolute;inset:0;z-index:55;background:#fff;
     display:flex;flex-direction:column;
@@ -280,8 +277,6 @@
     text-align:center;padding:80px 20px;color:#c8c8ce;
     font-size:14px;letter-spacing:.3px;
   }
-
-  /* ============ 抽卡演出层 ============ */
   .showcase{
     position:absolute;inset:0;z-index:70;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -291,7 +286,6 @@
     overflow:hidden;padding:24px;
   }
   .showcase.open{opacity:1;pointer-events:auto}
-
   .showcase-flash{
     position:absolute;left:50%;top:50%;
     width:62vmin;height:62vmin;margin:-31vmin 0 0 -31vmin;
@@ -304,7 +298,6 @@
     25%{opacity:1}
     100%{opacity:0;transform:scale(1.9)}
   }
-
   .showcase-darkburst{
     position:absolute;left:50%;top:50%;
     width:70vmin;height:70vmin;margin:-35vmin 0 0 -35vmin;
@@ -318,7 +311,6 @@
     28%{opacity:1;transform:scale(.95)}
     100%{opacity:0;transform:scale(2.15)}
   }
-
   .showcase-body{
     position:relative;z-index:2;
     display:flex;flex-direction:column;align-items:center;gap:26px;
@@ -333,7 +325,6 @@
     80%{transform:scale(.985)}
     100%{transform:scale(1);opacity:1}
   }
-
   .showcase-card-wrap{position:relative;display:flex}
   .showcase-glow{
     position:absolute;left:50%;top:50%;
@@ -353,7 +344,6 @@
   .showcase-card-wrap.sp .showcase-glow{
     background:radial-gradient(circle,rgba(0,0,0,.5),transparent 65%);
   }
-
   .showcase-frame{
     position:relative;z-index:1;
     width:min(250px,64vw);
@@ -365,7 +355,6 @@
   .showcase-frame.sp{
     box-shadow:0 24px 70px -18px rgba(0,0,0,.6);
   }
-
   .frame-ring-clip{
     position:absolute;inset:0;
     border-radius:28px;
@@ -391,7 +380,6 @@
       #2b2b2b 135deg, #5a5a5a 185deg, #000 245deg, #1c1c1c 300deg, #050505 360deg);
     animation-duration:4.5s;
   }
-
   .showcase-inner{
     position:absolute;inset:4px;
     border-radius:24px;
@@ -404,7 +392,6 @@
     border-radius:22px;
     box-shadow:inset 0 0 0 2px #000;
   }
-
   .showcase-card3d{
     position:absolute;inset:0;
     transform-style:preserve-3d;
@@ -414,7 +401,6 @@
     will-change:transform;
   }
   .showcase-card3d.flipped{transform:rotateY(180deg)}
-
   .face{
     position:absolute;inset:0;
     border-radius:24px;
@@ -424,8 +410,6 @@
     display:flex;align-items:center;justify-content:center;
   }
   .showcase-frame.sp .face{border-radius:22px}
-
-  /* 卡背：纯色 + 花体英文 */
   .face.back{
     background:#efe8d8;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);
@@ -442,7 +426,6 @@
     -webkit-user-select:none;user-select:none;
     white-space:nowrap;
   }
-
   .face.front{
     transform:rotateY(180deg);
     background:#fff;
@@ -453,7 +436,6 @@
     color:#c9b98f;text-align:center;padding:0 18px;line-height:1.45;
     word-break:break-word;
   }
-
   .showcase-info{
     position:relative;z-index:1;text-align:center;
     opacity:0;
@@ -465,7 +447,6 @@
     from{opacity:0;transform:translateY(12px)}
     to{opacity:1;transform:translateY(0)}
   }
-
   .showcase-rarity{
     height:20px;
     font-size:13px;font-weight:800;letter-spacing:4px;
@@ -474,14 +455,12 @@
   }
   .showcase-rarity.ssr{color:#b39b5c}
   .showcase-rarity.sp{color:#111;font-weight:900;letter-spacing:5px}
-
   .showcase-name{
     font-size:20px;font-weight:700;letter-spacing:.5px;color:#1a1a1a;
     max-width:280px;margin:0 auto;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   .showcase-name.sp{color:#000;font-weight:900;letter-spacing:1px}
-
   .showcase-hint{
     position:absolute;
     bottom:calc(28px + env(safe-area-inset-bottom));
@@ -490,8 +469,6 @@
     opacity:0;transition:opacity .3s ease;z-index:5;
   }
   .showcase.ready .showcase-hint{opacity:1}
-
-  /* 大图查看 */
   .viewer{
     position:absolute;inset:0;z-index:80;background:rgba(0,0,0,.86);
     display:flex;align-items:center;justify-content:center;
@@ -506,8 +483,109 @@
     cursor:pointer;display:flex;align-items:center;justify-content:center;
   }
   .viewer .vclose:active{background:rgba(255,255,255,.3)}
-
-  /* Toast */
+  .sheet-mask{
+    position:absolute;inset:0;z-index:90;
+    background:rgba(0,0,0,.35);
+    opacity:0;pointer-events:none;
+    transition:opacity .25s ease;
+    display:flex;align-items:flex-end;
+  }
+  .sheet-mask.open{opacity:1;pointer-events:auto}
+  .sheet{
+    width:100%;
+    background:#fff;
+    border-radius:26px 26px 0 0;
+    padding:10px 20px calc(20px + env(safe-area-inset-bottom));
+    transform:translateY(100%);
+    transition:transform .32s cubic-bezier(.4,0,.2,1);
+    max-height:88%;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .sheet-mask.open .sheet{transform:translateY(0)}
+  .sheet-handle{
+    width:38px;height:4px;border-radius:100px;background:#e5e5ea;
+    margin:0 auto 14px;
+  }
+  .sheet-title{font-size:17px;font-weight:700;letter-spacing:-.2px;text-align:center;margin-bottom:6px}
+  .sheet-desc{font-size:11.5px;color:#b0b0b6;text-align:center;line-height:1.6;margin-bottom:18px;padding:0 6px}
+  .sheet-section{
+    background:#fbfbfd;border:1px solid #f0f0f3;border-radius:16px;
+    padding:14px 14px 12px;margin-bottom:10px;
+  }
+  .sheet-section.danger{background:#fffafa;border-color:#fbeaea}
+  .sheet-sec-title{font-size:12px;font-weight:700;color:#9a9aa0;letter-spacing:.4px;margin-bottom:10px}
+  .sheet-section.danger .sheet-sec-title{color:#e07373}
+  .switch-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:4px 2px 12px;font-size:13px;color:#333;
+  }
+  .switch{position:relative;width:44px;height:26px;flex:none}
+  .switch input{position:absolute;opacity:0;width:0;height:0}
+  .switch .slider{
+    position:absolute;inset:0;border-radius:100px;background:#e5e5ea;
+    transition:background .2s ease;cursor:pointer;
+  }
+  .switch .slider::after{
+    content:'';position:absolute;top:3px;left:3px;
+    width:20px;height:20px;border-radius:50%;background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.2);
+    transition:transform .2s ease;
+  }
+  .switch input:checked + .slider{background:#111}
+  .switch input:checked + .slider::after{transform:translateX(18px)}
+  .sheet-btn{
+    width:100%;height:46px;border-radius:12px;border:none;
+    font-family:inherit;font-size:14px;font-weight:600;letter-spacing:.3px;
+    cursor:pointer;transition:transform .12s ease,opacity .12s ease;
+    background:#fff;color:#111;box-shadow:inset 0 0 0 1px #e8e8ec;
+  }
+  .sheet-btn:active{transform:scale(.98);opacity:.85}
+  .sheet-btn.primary{background:#111;color:#fff;box-shadow:none}
+  .sheet-btn.danger{background:#fff;color:#e05a5a;box-shadow:inset 0 0 0 1px #f5d5d5}
+  .sheet-btn:disabled{opacity:.45;pointer-events:none}
+  .confirm-mask{
+    position:absolute;inset:0;z-index:95;
+    background:rgba(0,0,0,.4);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .2s ease;
+    padding:32px;
+  }
+  .confirm-mask.open{opacity:1;pointer-events:auto}
+  .confirm-box{
+    width:100%;max-width:300px;background:#fff;border-radius:20px;
+    padding:22px 20px 16px;text-align:center;
+    transform:scale(.92);transition:transform .22s cubic-bezier(.2,.9,.3,1.1);
+    box-shadow:0 24px 60px -16px rgba(0,0,0,.3);
+  }
+  .confirm-mask.open .confirm-box{transform:scale(1)}
+  .confirm-title{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-bottom:8px}
+  .confirm-msg{font-size:12.5px;color:#8a8a90;line-height:1.6;margin-bottom:20px}
+  .confirm-actions{display:flex;gap:10px}
+  .confirm-btn{
+    flex:1;height:44px;border-radius:12px;border:none;
+    font-family:inherit;font-size:14px;font-weight:600;letter-spacing:.3px;cursor:pointer;
+    transition:transform .12s ease,opacity .12s ease;
+  }
+  .confirm-btn:active{transform:scale(.97);opacity:.85}
+  .confirm-btn#confirmCancel{background:#f5f5f7;color:#111}
+  .confirm-btn.primary{background:#111;color:#fff}
+  .confirm-btn.danger{background:#e05a5a;color:#fff}
+  .loading{
+    position:absolute;inset:0;z-index:96;
+    background:rgba(255,255,255,.78);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    opacity:0;pointer-events:none;transition:opacity .2s ease;
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+  }
+  .loading.open{opacity:1;pointer-events:auto}
+  .loading-spinner{
+    width:28px;height:28px;border-radius:50%;
+    border:3px solid #ececf0;border-top-color:#111;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-size:13px;color:#8a8a90;letter-spacing:.3px}
   .toast{
     position:absolute;left:50%;bottom:96px;z-index:99;transform:translateX(-50%) translateY(10px);
     background:rgba(17,17,17,.92);color:#fff;font-size:12px;letter-spacing:.2px;
@@ -523,7 +601,7 @@
 <div class="app" id="app">
 
   <div class="topbar">
-    <h1>抽卡模拟器</h1>
+    <h1>odds-jay</h1>
     <div class="top-right">
       <div class="badge">
         <b id="total">0</b>抽 ·
@@ -532,6 +610,7 @@
       </div>
       <button class="icon-btn" id="btnGallery">图鉴</button>
       <button class="icon-btn" id="btnEdit">编辑</button>
+      <button class="icon-btn more" id="btnData">⋯</button>
     </div>
   </div>
 
@@ -556,7 +635,6 @@
     <button class="btn btn-primary" id="btn10">十 连</button>
   </footer>
 
-  <!-- ============ 图鉴 ============ -->
   <div class="gallery" id="gallery">
     <div class="gl-head">
       <button class="ed-btn" id="glClose">返回</button>
@@ -566,7 +644,6 @@
     <div class="gl-list" id="glList"></div>
   </div>
 
-  <!-- ============ 抽卡演出层 ============ -->
   <div class="showcase" id="showcase">
     <div class="showcase-flash" id="showcaseFlash"></div>
     <div class="showcase-darkburst" id="showcaseDarkburst"></div>
@@ -600,7 +677,6 @@
     <div class="showcase-hint" id="showcaseHint">点击任意处继续</div>
   </div>
 
-  <!-- 编辑器 -->
   <div class="editor" id="editor">
     <div class="ed-head">
       <button class="ed-btn" id="edClose">完成</button>
@@ -609,17 +685,63 @@
     </div>
     <div class="ed-tabs" id="edTabs"></div>
     <div class="ed-note">
-      <span>同稀有度内等概率 · GIF≤3MB</span>
+      <span>自动按首字母排序 · GIF≤3MB</span>
       <span class="ed-storage" id="edStorage"></span>
     </div>
     <button class="ed-reset" id="edReset" style="align-self:flex-end;margin:0 18px 8px;font-size:11px">恢复默认卡池</button>
     <div class="ed-list" id="edList"></div>
   </div>
 
-  <!-- 大图查看器 -->
   <div class="viewer" id="viewer">
     <button class="vclose" id="viewerClose">✕</button>
     <img id="viewerImg" alt="">
+  </div>
+
+  <div class="sheet-mask" id="dataMask">
+    <div class="sheet" id="dataSheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">数据管理</div>
+      <div class="sheet-desc">卡池图片与抽卡记录保存在本机浏览器中。<br>建议定期导出备份，防止清理缓存后丢失。</div>
+
+      <div class="sheet-section">
+        <div class="sheet-sec-title">导出</div>
+        <label class="switch-row">
+          <span>包含抽卡记录</span>
+          <span class="switch">
+            <input type="checkbox" id="expIncludeStats" checked>
+            <span class="slider"></span>
+          </span>
+        </label>
+        <button class="sheet-btn primary" id="btnExport">导出为文件</button>
+      </div>
+
+      <div class="sheet-section">
+        <div class="sheet-sec-title">导入</div>
+        <button class="sheet-btn" id="btnImport">选择文件导入</button>
+        <input type="file" accept=".json,application/json" id="importFile" hidden>
+      </div>
+
+      <div class="sheet-section danger">
+        <div class="sheet-sec-title">重置</div>
+        <button class="sheet-btn danger" id="btnResetStats">重置抽卡记录</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-mask" id="confirmMask">
+    <div class="confirm-box">
+      <div class="confirm-title" id="confirmTitle">确认</div>
+      <div class="confirm-msg" id="confirmMsg"></div>
+      <div class="confirm-actions">
+        <button class="confirm-btn" id="confirmCancel">取消</button>
+        <button class="confirm-btn primary" id="confirmOk">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">处理中…</div>
   </div>
 
 </div>
@@ -628,15 +750,14 @@
 (function () {
   'use strict';
 
-  /* ================= 常量 ================= */
   const RARITIES = ['SP', 'SSR', 'SR', 'R', 'N'];
   const DB_NAME = 'gacha_db_v3';
   const DB_VER  = 1;
   const META_KEY = 'cards';
   const OLD_KEY  = 'gacha_cards_v2';
-  const STATS_KEY = 'gacha_stats_v1';
+  const STATS_KEY = 'odds_jay_stats_v1';
+  const STATE_KEY = 'odds_jay_state_v1';
 
-  /* 画质参数：高清主图 + 缩略图 */
   const MAX_EDGE_FULL  = 1440;
   const JPEG_Q_FULL    = 0.93;
   const MAX_EDGE_THUMB = 480;
@@ -644,17 +765,16 @@
   const MAX_GIF  = 3 * 1024 * 1024;
 
   const DEFAULT_CARDS = {
-    SP:  ['炽天圣裁', '混沌源神', '万象归终', '星海造物', '永劫真理'],
-    SSR: ['星辰之刃', '虚空龙皇', '天启圣女', '深渊之主', '永夜君王', '绯月巫女', '终焉之翼', '银河流光'],
-    SR:  ['霜华剑士', '炎术士', '圣光祭司', '暗影刺客', '风语游侠', '岩盾守卫'],
-    R:   ['史莱姆', '哥布林', '野狼', '石像鬼', '风精灵', '骷髅兵', '火焰蝙蝠', '小恶魔'],
-    N:   ['木乃伊', '沼泽巨蛙', '普通村民', '生锈铁剑', '破旧布甲', '小石子', '枯树枝', '旧卷轴']
+    SP:  ['炽天圣裁'],
+    SSR: ['星辰之刃'],
+    SR:  ['霜华剑士'],
+    R:   ['史莱姆'],
+    N:   ['木乃伊']
   };
 
   const uid = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const $ = id => document.getElementById(id);
 
-  /* ================= DOM ================= */
   const appEl = $('app');
   const rateEl = $('rate'), barEl = $('bar'), pityEl = $('pity'), hintEl = $('hint');
   const totalEl = $('total'), ssrEl = $('ssr'), spEl = $('sp'), spRateEl = $('spRate');
@@ -666,7 +786,12 @@
   const viewer = $('viewer'), viewerImg = $('viewerImg'), viewerClose = $('viewerClose');
   const btn1 = $('btn1'), btn10 = $('btn10');
 
-  /* 演出层 DOM */
+  const dataMask = $('dataMask'), expIncludeStats = $('expIncludeStats');
+  const btnExport = $('btnExport'), btnImport = $('btnImport'), importFile = $('importFile');
+  const btnResetStats = $('btnResetStats');
+  const confirmMask = $('confirmMask');
+  const loadingEl = $('loading'), loadingText = $('loadingText');
+
   const showcaseEl = $('showcase');
   const showcaseFrame = $('showcaseFrame');
   const showcaseCardWrap = $('showcaseCardWrap');
@@ -681,7 +806,6 @@
 
   /* ================= IndexedDB ================= */
   let dbPromise = null;
-
   function openDB() {
     if (dbPromise) return dbPromise;
     dbPromise = new Promise((resolve, reject) => {
@@ -697,7 +821,6 @@
     });
     return dbPromise;
   }
-
   function idbGet(store, key) {
     return openDB().then(db => new Promise((res, rej) => {
       const t = db.transaction(store, 'readonly');
@@ -706,7 +829,6 @@
       r.onerror   = () => rej(r.error);
     }));
   }
-
   function idbPut(store, key, val) {
     return openDB().then(db => new Promise((res, rej) => {
       const t = db.transaction(store, 'readwrite');
@@ -715,7 +837,6 @@
       t.onerror    = () => rej(t.error || new Error('写入失败'));
     }));
   }
-
   function idbDel(store, key) {
     return openDB().then(db => new Promise((res, rej) => {
       const t = db.transaction(store, 'readwrite');
@@ -725,9 +846,8 @@
     }));
   }
 
-  /* ================= 图片 URL 缓存 ================= */
+  /* ================= URL 缓存 ================= */
   const urlCache = new Map();
-
   function getImgURL(id, kind) {
     const key = id + ':' + kind;
     if (urlCache.has(key)) return Promise.resolve(urlCache.get(key));
@@ -740,7 +860,6 @@
       return url;
     }).catch(() => '');
   }
-
   function clearURLCache(id) {
     ['full', 'thumb'].forEach(k => {
       const key = id + ':' + k;
@@ -754,8 +873,8 @@
   let ready = false;
   let curRarity = 'SSR';
 
-  /* 统计：cardId -> 抽到次数 */
   let stats = {};
+  const state = { total: 0, pityCount: 0, ssrCount: 0, spCount: 0 };
 
   function loadStats() {
     try {
@@ -767,6 +886,20 @@
   function saveStats() {
     try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {}
   }
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STATE_KEY);
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      state.total = Number(o.total) || 0;
+      state.pityCount = Number(o.pityCount) || 0;
+      state.ssrCount = Number(o.ssrCount) || 0;
+      state.spCount = Number(o.spCount) || 0;
+    } catch (e) {}
+  }
+  function saveState() {
+    try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
 
   function defaultMeta() {
     const out = {};
@@ -774,6 +907,13 @@
       out[r] = DEFAULT_CARDS[r].map(n => ({ id: uid(), name: n, hasImg: false, isGif: false }));
     });
     return out;
+  }
+
+  /* 修复：统一校验 id 合法性 */
+  function safeId(raw) {
+    const s = String(raw || '');
+    if (!/^[a-zA-Z0-9_-]{1,64}$/.test(s)) return uid();
+    return s;
   }
 
   async function resizeImageToBlob(img, maxEdge, quality) {
@@ -795,37 +935,60 @@
     });
   }
 
+  function blobToDataURL(blob) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = () => rej(r.error || new Error('读取失败'));
+      r.readAsDataURL(blob);
+    });
+  }
+
+  async function loadImageBlob(blob) {
+    const url = URL.createObjectURL(blob);
+    try {
+      return await new Promise((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i);
+        i.onerror = () => rej(new Error('图片解析失败'));
+        i.src = url;
+      });
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
   async function tryMigrateOld() {
     try {
       const raw = localStorage.getItem(OLD_KEY);
       if (!raw) return null;
       const obj = JSON.parse(raw);
       const meta = {};
+      const usedIds = new Set();
       for (const r of RARITIES) {
         meta[r] = [];
         if (!Array.isArray(obj[r])) continue;
         for (const c of obj[r]) {
-          const id = String(c.id || uid());
+          // 修复：迁移时也校验 id
+          let id = safeId(c.id);
+          while (usedIds.has(id)) id = uid();
+          usedIds.add(id);
           let hasImg = false, isGif = false;
           if (c.img && /^data:image\//.test(c.img)) {
             try {
               const blob = await (await fetch(c.img)).blob();
               const isG = blob.type === 'image/gif';
-              let thumb = null;
+              const img = await loadImageBlob(blob);
+              const thumb = await resizeImageToBlob(img, MAX_EDGE_THUMB, JPEG_Q_THUMB);
               if (isG) {
-                const url = URL.createObjectURL(blob);
-                const img = await new Promise((res, rej) => {
-                  const i = new Image();
-                  i.onload = () => res(i);
-                  i.onerror = rej;
-                  i.src = url;
-                });
-                thumb = await resizeImageToBlob(img, MAX_EDGE_THUMB, JPEG_Q_THUMB);
-                URL.revokeObjectURL(url);
+                await idbPut('images', id, { blob, thumb, type: 'image/gif', isGif: true });
+                isGif = true;
+              } else {
+                const full = await resizeImageToBlob(img, MAX_EDGE_FULL, JPEG_Q_FULL);
+                await idbPut('images', id, { blob: full, thumb, type: 'image/jpeg', isGif: false });
               }
-              await idbPut('images', id, { blob, thumb, type: blob.type, isGif: isG });
-              hasImg = true; isGif = isG;
-            } catch (e) { /* 单张失败忽略 */ }
+              hasImg = true;
+            } catch (e) {}
           }
           meta[r].push({ id, name: String(c.name || ''), hasImg, isGif });
         }
@@ -877,7 +1040,6 @@
     return null;
   }
 
-  /* ================= 图片处理 ================= */
   function loadImageFromFile(file) {
     return new Promise((res, rej) => {
       const url = URL.createObjectURL(file);
@@ -897,9 +1059,7 @@
     const { img, url } = await loadImageFromFile(file);
     try {
       const thumb = await resizeImageToBlob(img, MAX_EDGE_THUMB, JPEG_Q_THUMB);
-      if (isGif) {
-        return { blob: file, thumb, type: 'image/gif', isGif: true };
-      }
+      if (isGif) return { blob: file, thumb, type: 'image/gif', isGif: true };
       const full = await resizeImageToBlob(img, MAX_EDGE_FULL, JPEG_Q_FULL);
       return { blob: full, thumb, type: 'image/jpeg', isGif: false };
     } finally {
@@ -907,10 +1067,7 @@
     }
   }
 
-  /* ================= 抽卡状态与概率 ================= */
-  const state = { total: 0, pityCount: 0, ssrCount: 0, spCount: 0 };
-  let drawing = false;
-
+  /* ================= 抽卡 ================= */
   function currentSSRRate() {
     const n = state.pityCount + 1;
     if (n <= 50) return 0.02;
@@ -921,7 +1078,6 @@
     const ssrRate = currentSSRRate();
     const x = Math.random();
     let rarity;
-
     if (x < ssrRate) {
       rarity = Math.random() < 0.10 ? 'SP' : 'SSR';
     } else {
@@ -937,7 +1093,6 @@
         else                           rarity = 'N';
       }
     }
-
     state.total++;
     if (rarity === 'SSR' || rarity === 'SP') {
       state.pityCount = 0;
@@ -946,15 +1101,9 @@
     } else {
       state.pityCount++;
     }
-
     const arr = cards[rarity] || [];
     const card = arr.length ? arr[Math.floor(Math.random() * arr.length)] : null;
-
-    // 记录图鉴统计
-    if (card && card.id) {
-      stats[card.id] = (stats[card.id] || 0) + 1;
-    }
-
+    if (card && card.id) stats[card.id] = (stats[card.id] || 0) + 1;
     return {
       rarity,
       id: card ? card.id : '',
@@ -965,7 +1114,6 @@
     };
   }
 
-  /* ================= 渲染抽卡结果 ================= */
   const esc = s => String(s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
   ));
@@ -974,7 +1122,6 @@
     stageEl.classList.add('show');
     gridEl.className = 'grid ' + (results.length > 1 ? 'g10' : 'g1');
     gridEl.innerHTML = '';
-
     results.forEach((r, i) => {
       const card = document.createElement('div');
       card.className = 'card ' + r.rarity.toLowerCase()
@@ -991,7 +1138,6 @@
         '<span class="idx">#' + r.index + '</span>';
       gridEl.appendChild(card);
     });
-
     if (results.some(r => r.rarity === 'SSR' || r.rarity === 'SP') && navigator.vibrate) {
       navigator.vibrate([18, 40, 18]);
     }
@@ -1006,34 +1152,30 @@
     totalEl.textContent  = state.total;
     ssrEl.textContent    = state.ssrCount;
     spEl.textContent     = state.spCount;
-
     const n = state.pityCount + 1;
     hintEl.textContent = n <= 50
       ? '前 50 抽概率恒定 · 还有 ' + (51 - n) + ' 抽开始提升'
       : '第 ' + n + ' 抽 · 概率提升中';
   }
 
-  /* ================= 抽卡主流程 ================= */
+  let drawing = false;
   async function draw(times) {
     if (!ready) { toast('正在初始化…'); return; }
     if (drawing || showcasing) return;
     drawing = true;
     btn1.disabled = true;
     btn10.disabled = true;
-
     try {
       const results = [];
       for (let i = 0; i < times; i++) results.push(drawOne());
       saveStats();
-
+      saveState();
       const useThumb = times > 1;
       await Promise.all(results.map(async r => {
         r.imgUrl = (r.hasImg && r.id) ? await getImgURL(r.id, useThumb ? 'thumb' : 'full') : '';
       }));
-
       render(results);
       updateStats();
-
       const specials = results.filter(r => r.rarity === 'SSR' || r.rarity === 'SP');
       if (specials.length) {
         queueShowcase(specials);
@@ -1049,7 +1191,7 @@
     }
   }
 
-  /* ================= 演出队列 ================= */
+  /* ================= 演出 ================= */
   let showQueue = [];
   let showReady = false;
   let showcasing = false;
@@ -1152,7 +1294,6 @@
     showReady = false;
     showcaseEl.classList.remove('ready');
     clearShowTimers();
-
     if (showQueue.length) {
       showcaseEl.classList.remove('open');
       showTimers.push(setTimeout(() => {
@@ -1183,7 +1324,7 @@
 
   showcaseEl.addEventListener('click', advanceShowcase);
 
-  /* ================= 查看大图 ================= */
+  /* ================= 大图 ================= */
   function openViewer(url) {
     if (!url) return;
     viewerImg.src = url;
@@ -1211,11 +1352,9 @@
 
   /* ================= 图鉴 ================= */
   let glToken = 0;
-
   async function renderGallery() {
     const token = ++glToken;
     if (!cards) return;
-
     let totalAll = 0, totalOwned = 0;
     const secs = [];
     for (const r of RARITIES) {
@@ -1227,12 +1366,10 @@
       secs.push({ r, arr, owned });
     }
     glProgress.textContent = totalOwned + ' / ' + totalAll;
-
     if (!totalAll) {
       glList.innerHTML = '<div class="gl-empty">卡池为空</div>';
       return;
     }
-
     let html = '';
     for (const sec of secs) {
       if (!sec.arr.length) continue;
@@ -1240,8 +1377,7 @@
       html += '<div class="gl-sec-title">';
       html += '<span class="gl-sec-r ' + sec.r.toLowerCase() + '">' + sec.r + '</span>';
       html += '<span class="gl-sec-n">' + sec.owned + '/' + sec.arr.length + '</span>';
-      html += '</div>';
-      html += '<div class="gl-grid">';
+      html += '</div><div class="gl-grid">';
       for (const c of sec.arr) {
         const count = stats[c.id] || 0;
         const owned = count > 0;
@@ -1291,7 +1427,6 @@
     galleryEl.classList.remove('open');
     glToken++;
   }
-
   $('btnGallery').addEventListener('click', openGallery);
   $('glClose').addEventListener('click', closeGallery);
 
@@ -1306,6 +1441,17 @@
 
   /* ================= 编辑器 ================= */
   let editorToken = 0;
+  let sortTimer = null;
+  let nameTimer = null;
+
+  function compareCards(a, b) {
+    const an = (a.name || '').trim();
+    const bn = (b.name || '').trim();
+    if (!an && !bn) return 0;
+    if (!an) return 1;
+    if (!bn) return -1;
+    return an.localeCompare(bn, 'zh-CN', { numeric: true, sensitivity: 'base' });
+  }
 
   function renderEditorTabs() {
     edTabs.innerHTML = RARITIES.map(r =>
@@ -1319,35 +1465,32 @@
   async function renderEditor() {
     const token = ++editorToken;
     renderEditorTabs();
-
     const arr = cards[curRarity] || [];
     if (!arr.length) {
       edList.innerHTML = '<div class="ed-empty">暂无卡面<br><span>点击右上角「+ 添加」创建</span></div>';
       updateStorageInfo();
       return;
     }
-
+    const sorted = arr.slice().sort(compareCards);
     const each = (100 / arr.length).toFixed(1);
-    edList.innerHTML = arr.map(c => {
-      return '<div class="ed-item" data-id="' + c.id + '">' +
+    edList.innerHTML = sorted.map(c =>
+      '<div class="ed-item" data-id="' + c.id + '">' +
         '<label class="ed-thumb">' +
           '<span class="ph">+ 图片</span>' +
           (c.isGif ? '<span class="gif-tag">GIF</span>' : '') +
           '<input type="file" accept="image/*" class="ed-file" hidden>' +
         '</label>' +
         '<div class="ed-body">' +
-          '<input class="ed-name" type="text" value="' + esc(c.name) + '" ' +
-                 'placeholder="输入卡面名称" maxlength="14">' +
-          '<div class="ed-sub">' + curRarity + ' · 共 ' + arr.length +
-            ' 张 · 该稀有度内占比 ' + each + '%</div>' +
+          '<input class="ed-name" type="text" value="' + esc(c.name) + '" placeholder="输入卡面名称" maxlength="20">' +
+          '<div class="ed-sub">' + curRarity + ' · 共 ' + arr.length + ' 张 · 该稀有度内占比 ' + each + '%</div>' +
         '</div>' +
         '<button class="ed-del" data-act="del" aria-label="删除">✕</button>' +
-      '</div>';
-    }).join('');
+      '</div>'
+    ).join('');
 
-    const urls = await Promise.all(arr.map(c => c.hasImg ? getImgURL(c.id, 'thumb') : Promise.resolve('')));
+    const urls = await Promise.all(sorted.map(c => c.hasImg ? getImgURL(c.id, 'thumb') : Promise.resolve('')));
     if (token !== editorToken) return;
-    arr.forEach((c, i) => {
+    sorted.forEach((c, i) => {
       if (!urls[i]) return;
       const item = edList.querySelector('.ed-item[data-id="' + c.id + '"] .ed-thumb');
       if (!item || item.querySelector('img')) return;
@@ -1358,7 +1501,6 @@
       const ph = item.querySelector('.ph');
       if (ph) ph.remove();
     });
-
     updateStorageInfo();
   }
 
@@ -1386,13 +1528,13 @@
   edList.addEventListener('click', async e => {
     const del = e.target.closest('[data-act="del"]');
     if (!del) return;
+    clearTimeout(sortTimer);
     const item = del.closest('.ed-item');
     if (!item) return;
     const id = item.dataset.id;
     const arr = cards[curRarity];
     const idx = arr.findIndex(c => c.id === id);
     if (idx < 0) return;
-
     const [removed] = arr.splice(idx, 1);
     if (!await saveMeta()) { arr.splice(idx, 0, removed); return; }
     clearURLCache(id);
@@ -1401,7 +1543,6 @@
     renderEditor();
   });
 
-  let nameTimer = null;
   edList.addEventListener('input', e => {
     const input = e.target;
     if (!input.classList.contains('ed-name')) return;
@@ -1414,11 +1555,26 @@
     nameTimer = setTimeout(() => saveMeta(), 500);
   });
 
+  edList.addEventListener('focusout', e => {
+    if (!e.target.classList.contains('ed-name')) return;
+    clearTimeout(sortTimer);
+    sortTimer = setTimeout(async () => {
+      if (!editorEl.classList.contains('open')) return;
+      if (document.activeElement && document.activeElement.classList.contains('ed-name')) return;
+      clearTimeout(nameTimer);
+      saveMeta();
+      const scroll = edList.scrollTop;
+      await renderEditor();
+      edList.scrollTop = scroll;
+    }, 260);
+  });
+
+  // 修复：滚动改为 nearest，避免过度居中
   edList.addEventListener('focusin', e => {
     if (e.target.classList.contains('ed-name')) {
       const el = e.target;
       setTimeout(() => {
-        try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (err) {}
+        try { el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (err) {}
       }, 300);
     }
   });
@@ -1427,18 +1583,20 @@
     const input = e.target;
     if (!input.classList.contains('ed-file')) return;
     const file = input.files && input.files[0];
-    if (!file) return;
+    // 修复：取消选择时也重置 value，否则下次选同一文件不触发 change
+    if (!file) { input.value = ''; return; }
     const item = input.closest('.ed-item');
-    if (!item) return;
+    if (!item) { input.value = ''; return; }
     const id = item.dataset.id;
     const targetRarity = curRarity;
     input.value = '';
-
     const card = cards[targetRarity].find(c => c.id === id);
     if (!card) return;
 
     toast('处理中…');
     try {
+      // 修复：备份旧图片记录，保存失败时恢复，避免误删原图
+      const oldRec = card.hasImg ? await idbGet('images', id).catch(() => null) : null;
       const rec = await processImage(file);
       await idbPut('images', id, rec);
 
@@ -1448,7 +1606,11 @@
       if (!await saveMeta()) {
         card.hasImg = oldHas;
         card.isGif = oldGif;
-        await idbDel('images', id).catch(() => {});
+        if (oldRec) {
+          await idbPut('images', id, oldRec).catch(() => {});
+        } else {
+          await idbDel('images', id).catch(() => {});
+        }
         throw new Error('保存失败');
       }
       clearURLCache(id);
@@ -1460,11 +1622,11 @@
   });
 
   edAddBtn.addEventListener('click', async () => {
+    clearTimeout(sortTimer);
     const nc = { id: uid(), name: '', hasImg: false, isGif: false };
     cards[curRarity].push(nc);
     if (!await saveMeta()) { cards[curRarity].pop(); return; }
     await renderEditor();
-
     const items = edList.querySelectorAll('.ed-item');
     const last = items[items.length - 1];
     if (last) {
@@ -1477,7 +1639,16 @@
   });
 
   edReset.addEventListener('click', async () => {
-    if (!confirm('恢复为默认卡池？所有自定义内容（含图片）和抽卡统计将被清除。')) return;
+    const ok = await showConfirm({
+      title: '恢复默认卡池',
+      msg: '将恢复为每个等级一张示范卡，所有自定义卡面、图片和抽卡记录都会被清除。',
+      okText: '恢复默认',
+      danger: true
+    });
+    if (!ok) return;
+
+    clearTimeout(sortTimer);
+    clearTimeout(nameTimer);
     const oldCards = cards;
     const meta = defaultMeta();
     cards = meta;
@@ -1493,7 +1664,13 @@
     }
     stats = {};
     saveStats();
+    state.total = 0; state.pityCount = 0; state.ssrCount = 0; state.spCount = 0;
+    saveState();
+    updateStats();
     await renderEditor();
+    // 修复：清空旧抽卡结果，避免残留卡片引用已删除的 id
+    stageEl.classList.remove('show');
+    gridEl.innerHTML = '';
     toast('已恢复默认卡池');
   });
 
@@ -1504,6 +1681,9 @@
   }
 
   function closeEditor() {
+    clearTimeout(nameTimer);
+    clearTimeout(sortTimer);
+    saveMeta();
     editorEl.classList.remove('open');
     stageEl.classList.remove('show');
     gridEl.innerHTML = '';
@@ -1511,6 +1691,276 @@
 
   $('btnEdit').addEventListener('click', openEditor);
   edClose.addEventListener('click', closeEditor);
+
+  /* ================= 数据面板 ================= */
+  function openDataPanel() { dataMask.classList.add('open'); }
+  function closeDataPanel() { dataMask.classList.remove('open'); }
+  $('btnData').addEventListener('click', openDataPanel);
+  dataMask.addEventListener('click', e => {
+    if (e.target === dataMask) closeDataPanel();
+  });
+  $('dataSheet').addEventListener('click', e => e.stopPropagation());
+
+  function showLoading(text) {
+    loadingText.textContent = text || '处理中…';
+    loadingEl.classList.add('open');
+  }
+  function hideLoading() { loadingEl.classList.remove('open'); }
+
+  /* ---- 导出 ---- */
+  btnExport.addEventListener('click', async () => {
+    if (!ready) { toast('正在初始化…'); return; }
+
+    let imgCount = 0;
+    for (const r of RARITIES) for (const c of cards[r]) if (c.hasImg) imgCount++;
+    if (imgCount > 25) {
+      const est = Math.round(imgCount * 0.6);
+      const ok = await showConfirm({
+        title: '导出提醒',
+        msg: '当前卡池包含 ' + imgCount + ' 张图片，导出文件可能较大（约 ' + est + 'MB），在部分设备上可能较慢或失败。建议分批导出或先压缩图片。',
+        okText: '继续导出',
+        danger: false
+      });
+      if (!ok) return;
+    }
+
+    btnExport.disabled = true;
+    showLoading('正在导出…');
+    try {
+      const includeStats = expIncludeStats.checked;
+      const data = {
+        app: 'odds-jay',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        cards: {}
+      };
+      if (includeStats) {
+        data.stats = stats;
+        data.state = state;
+      }
+      for (const r of RARITIES) {
+        data.cards[r] = [];
+        for (const c of cards[r]) {
+          let img = '';
+          if (c.hasImg) {
+            try {
+              const rec = await idbGet('images', c.id);
+              if (rec && rec.blob) img = await blobToDataURL(rec.blob);
+              else if (rec && rec.thumb) img = await blobToDataURL(rec.thumb);
+            } catch (e) {}
+          }
+          data.cards[r].push({
+            id: c.id, name: c.name,
+            hasImg: !!c.hasImg, isGif: !!c.isGif, img: img
+          });
+        }
+      }
+      const json = JSON.stringify(data);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      a.href = url;
+      a.download = 'odds-jay-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) +
+        '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      toast('已导出');
+    } catch (e) {
+      toast('导出失败：' + (e.message || '未知错误'));
+    } finally {
+      hideLoading();
+      btnExport.disabled = false;
+    }
+  });
+
+  /* ---- 导入 ---- */
+  btnImport.addEventListener('click', () => {
+    importFile.value = '';
+    importFile.click();
+  });
+
+  importFile.addEventListener('change', async () => {
+    const file = importFile.files && importFile.files[0];
+    if (!file) { importFile.value = ''; return; }
+
+    const ok = await showConfirm({
+      title: '导入卡池',
+      msg: '导入将覆盖当前卡池和抽卡记录，确定继续吗？',
+      okText: '导入',
+      danger: true
+    });
+    if (!ok) { importFile.value = ''; return; }
+
+    btnImport.disabled = true;
+    showLoading('正在导入…');
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data || !data.cards) throw new Error('文件格式不正确');
+
+      const prevCards = cards;
+      const newCards = {};
+      const newStats = {};
+      let importedStats = false;
+      const usedIds = new Set();
+      const importedIds = [];       // 记录新写入的图片 id，失败时清理
+      const oldIdSet = new Set();
+      for (const r of RARITIES) for (const c of prevCards[r]) oldIdSet.add(c.id);
+
+      for (const r of RARITIES) {
+        newCards[r] = [];
+        const arr = Array.isArray(data.cards[r]) ? data.cards[r] : [];
+        for (const c of arr) {
+          let id = safeId(c.id);
+          while (usedIds.has(id)) id = uid();
+          usedIds.add(id);
+          const name = String(c.name || '');
+          let hasImg = false;
+          let isGif = !!c.isGif;
+
+          if (c.img && /^data:image\//.test(c.img)) {
+            try {
+              const blob = await (await fetch(c.img)).blob();
+              const img = await loadImageBlob(blob);
+              const thumb = await resizeImageToBlob(img, MAX_EDGE_THUMB, JPEG_Q_THUMB);
+              isGif = blob.type === 'image/gif';
+              if (isGif) {
+                await idbPut('images', id, { blob, thumb, type: 'image/gif', isGif: true });
+              } else {
+                const full = await resizeImageToBlob(img, MAX_EDGE_FULL, JPEG_Q_FULL);
+                await idbPut('images', id, { blob: full, thumb, type: 'image/jpeg', isGif: false });
+              }
+              hasImg = true;
+              // 记录：仅新 id 才清理（避免误删原有图片）
+              if (!oldIdSet.has(id)) importedIds.push(id);
+            } catch (e) {}
+          }
+          newCards[r].push({ id, name, hasImg, isGif });
+        }
+      }
+
+      if (data.stats && typeof data.stats === 'object') {
+        for (const k in data.stats) {
+          if (typeof data.stats[k] === 'number') newStats[k] = data.stats[k];
+        }
+        importedStats = true;
+      }
+
+      cards = newCards;
+      if (!await saveMeta()) {
+        // 修复：导入失败清理新写入的图片（仅新 id）
+        for (const id of importedIds) {
+          clearURLCache(id);
+          await idbDel('images', id).catch(() => {});
+        }
+        cards = prevCards;
+        throw new Error('写入失败，可能是存储空间不足');
+      }
+
+      if (importedStats) {
+        stats = newStats;
+        saveStats();
+        if (data.state && typeof data.state === 'object') {
+          state.total = Number(data.state.total) || 0;
+          state.pityCount = Number(data.state.pityCount) || 0;
+          state.ssrCount = Number(data.state.ssrCount) || 0;
+          state.spCount = Number(data.state.spCount) || 0;
+          saveState();
+        }
+      } else {
+        const validIds = new Set();
+        for (const r of RARITIES) for (const c of newCards[r]) validIds.add(c.id);
+        const cleaned = {};
+        for (const k in stats) if (validIds.has(k)) cleaned[k] = stats[k];
+        stats = cleaned;
+        saveStats();
+      }
+
+      // 清理旧图片（不在新卡池中的）
+      const newIds = new Set();
+      for (const r of RARITIES) for (const c of newCards[r]) newIds.add(c.id);
+      for (const r of RARITIES) {
+        for (const c of prevCards[r]) {
+          if (!newIds.has(c.id)) {
+            clearURLCache(c.id);
+            await idbDel('images', c.id).catch(() => {});
+          }
+        }
+      }
+
+      updateStats();
+      if (editorEl.classList.contains('open')) renderEditor();
+      if (galleryEl.classList.contains('open')) renderGallery();
+      closeDataPanel();
+      toast('导入完成');
+    } catch (e) {
+      toast('导入失败：' + (e.message || '文件无效'));
+    } finally {
+      hideLoading();
+      btnImport.disabled = false;
+      importFile.value = '';
+    }
+  });
+
+  /* ---- 重置抽卡记录（双重确认） ---- */
+  btnResetStats.addEventListener('click', async () => {
+    const ok1 = await showConfirm({
+      title: '重置抽卡记录',
+      msg: '将清空所有卡片的抽到次数，以及总抽数、保底计数和 SSR/SP 计数。卡池本身不受影响。',
+      okText: '继续',
+      danger: false
+    });
+    if (!ok1) return;
+
+    const ok2 = await showConfirm({
+      title: '再次确认',
+      msg: '确定要清空全部抽卡记录吗？此操作不可撤销。',
+      okText: '确认重置',
+      danger: true
+    });
+    if (!ok2) return;
+
+    stats = {};
+    saveStats();
+    state.total = 0; state.pityCount = 0; state.ssrCount = 0; state.spCount = 0;
+    saveState();
+    updateStats();
+    closeDataPanel();
+    toast('抽卡记录已重置');
+  });
+
+  /* ================= 确认弹层 ================= */
+  let confirmResolver = null;
+  function showConfirm(opts) {
+    return new Promise(resolve => {
+      if (confirmResolver) {
+        const prev = confirmResolver;
+        confirmResolver = null;
+        try { prev(false); } catch (e) {}
+      }
+      $('confirmTitle').textContent = opts.title || '确认';
+      $('confirmMsg').textContent = opts.msg || '';
+      const okBtn = $('confirmOk');
+      okBtn.textContent = opts.okText || '确定';
+      okBtn.classList.toggle('danger', !!opts.danger);
+      okBtn.classList.toggle('primary', !opts.danger);
+      confirmMask.classList.add('open');
+      confirmResolver = val => {
+        confirmMask.classList.remove('open');
+        confirmResolver = null;
+        resolve(val);
+      };
+    });
+  }
+  $('confirmOk').addEventListener('click', () => { if (confirmResolver) confirmResolver(true); });
+  $('confirmCancel').addEventListener('click', () => { if (confirmResolver) confirmResolver(false); });
+  confirmMask.addEventListener('click', e => {
+    if (e.target === confirmMask && confirmResolver) confirmResolver(false);
+  });
 
   /* ================= Toast ================= */
   let toastTimer = null;
@@ -1525,33 +1975,24 @@
     el.textContent = msg;
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
   }
 
   /* ================= 启动 ================= */
   btn1.addEventListener('click', () => draw(1));
   btn10.addEventListener('click', () => draw(10));
-
   document.addEventListener('gesturestart', e => e.preventDefault());
-  document.addEventListener('dblclick', e => e.preventDefault());
 
   async function init() {
-    try {
-      await openDB();
-    } catch (e) {
-      toast('浏览器不支持本地数据库，请更换浏览器');
-      return;
-    }
+    try { await openDB(); }
+    catch (e) { toast('浏览器不支持本地数据库，请更换浏览器'); return; }
     try { await loadCards(); } catch (e) { cards = defaultMeta(); }
     loadStats();
+    loadState();
     updateStats();
     ready = true;
-
-    if (navigator.storage && navigator.storage.persist) {
-      navigator.storage.persist().catch(() => {});
-    }
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
   }
-
   init();
 })();
 </script>
